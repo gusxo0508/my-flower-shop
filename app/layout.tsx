@@ -42,14 +42,44 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    toast.success('로그아웃 되었습니다.', { style: { background: '#1c1917', color: '#fff' }});
+    toast.success('로그아웃 되었습니다.');
     setTimeout(() => { window.location.href = '/login'; }, 1000);
   };
 
   return (
     <html lang="ko" className="antialiased">
       <body className="bg-[#FAFAFA] text-stone-800 font-light selection:bg-stone-800 selection:text-stone-100">
-        <Toaster position="top-center" toastOptions={{ duration: 3000, style: { borderRadius: '0px', border: '1px solid #e7e5e4' } }} />
+        
+        {/* ✨ 팝업(Toast)을 다크 럭셔리 톤으로 전면 수정 */}
+        <Toaster 
+          position="top-center" 
+          toastOptions={{ 
+            duration: 3000, 
+            style: { 
+              background: '#1c1917', // 차콜/블랙 배경
+              color: '#fafafa',      // 흰색 글씨
+              borderRadius: '0px',   // 완벽한 직각
+              border: '1px solid #44403c', // 은은한 다크 테두리
+              fontSize: '13px',
+              fontWeight: '300',
+              letterSpacing: '0.05em',
+              padding: '16px 24px',
+              boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.3)'
+            },
+            success: {
+              iconTheme: { 
+                primary: '#b45309', // 골드(Amber) 색상 체크마크
+                secondary: '#fff' 
+              }
+            },
+            error: {
+              iconTheme: { 
+                primary: '#ef4444', 
+                secondary: '#fff' 
+              }
+            }
+          }} 
+        />
 
         {/* ✨ 고급스러운 호텔 스타일 네비게이션 바 */}
         <nav className={`fixed w-full top-0 z-50 transition-all duration-500 ${isScrolled ? 'bg-white/95 backdrop-blur-sm border-b border-stone-200 py-2' : 'bg-transparent py-4'}`}>
@@ -64,7 +94,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   <Link href="/shop" className={`text-sm tracking-widest hover:text-amber-700 transition-colors ${isScrolled ? 'text-stone-600' : 'text-stone-800'}`}>
                     FLOWER MARKET
                   </Link>
-                  {/* 👇 바로 이 부분의 오타(is Scrolled)를 수정했습니다! 👇 */}
                   <Link href="/notices" className={`text-sm tracking-widest hover:text-amber-700 transition-colors ${isScrolled ? 'text-stone-600' : 'text-stone-800'}`}>
                     NOTICE
                   </Link>
