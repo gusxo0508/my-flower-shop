@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
-import DaumPostcodeEmbed from 'react-daum-postcode'; // ✨ 우편번호 API
+import DaumPostcodeEmbed from 'react-daum-postcode';
 
 export default function Login() {
   const [isLoginMode, setIsLoginMode] = useState(true);
@@ -14,8 +14,8 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');       
   const [address, setAddress] = useState(''); 
-  const [detailAddress, setDetailAddress] = useState(''); // 상세주소 
-  const [isPostcodeOpen, setIsPostcodeOpen] = useState(false); // 주소창 모달
+  const [detailAddress, setDetailAddress] = useState(''); 
+  const [isPostcodeOpen, setIsPostcodeOpen] = useState(false); 
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,53 +23,41 @@ export default function Login() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      toast.error('로그인 실패: 이메일이나 비밀번호를 확인해주세요 🔒');
+      toast.error('이메일이나 비밀번호를 확인해주세요.');
       setLoading(false);
     } else {
-      toast.success('환영합니다!');
+      toast.success('환영합니다.');
       setTimeout(() => { window.location.href = '/'; }, 1000);
     }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // ✨ 비밀번호 복잡성 검사 (8~15자리 영문, 숫자, 특수문자 조합)
     const passwordRegex = /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*?_~]).{8,15}$/;
     if (!passwordRegex.test(password)) {
       toast.error('비밀번호는 8~15자리의 영문, 숫자, 특수문자 조합이어야 합니다.');
       return;
     }
-
     if (!name || !address) {
-      toast.error('이름(상호명)과 주소를 모두 입력해주세요.');
+      toast.error('모든 항목을 입력해주세요.');
       return;
     }
-
     setLoading(true);
     const fullAddress = detailAddress ? `${address} ${detailAddress}` : address;
-
     const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { name: name, address: fullAddress } }
+      email, password, options: { data: { name: name, address: fullAddress } }
     });
 
     if (error) {
-      // Supabase 기본 이메일 중복 에러 처리
-      if (error.message.includes('already registered')) {
-        toast.error('이미 가입된 이메일입니다. 다른 이메일을 사용해주세요.');
-      } else {
-        toast.error('회원가입 실패: ' + error.message);
-      }
+      if (error.message.includes('already registered')) toast.error('이미 가입된 이메일입니다.');
+      else toast.error('회원가입 실패: ' + error.message);
     } else {
-      toast.success('🎉 가입이 완료되었습니다! 로그인해주세요.');
+      toast.success('가입이 완료되었습니다. 로그인해주세요.');
       setIsLoginMode(true); 
     }
     setLoading(false);
   };
 
-  // ✨ 우편번호 검색 완료 후 처리 함수
   const handleCompletePostcode = (data: any) => {
     let fullAddress = data.address;
     let extraAddress = '';
@@ -79,71 +67,66 @@ export default function Login() {
       fullAddress += extraAddress !== '' ? ` (${extraAddress})` : '';
     }
     setAddress(fullAddress);
-    setIsPostcodeOpen(false); // 모달 닫기
+    setIsPostcodeOpen(false);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-green-100 relative">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-extrabold text-green-800">
-            {isLoginMode ? '플로리스트 로그인' : '도매 회원가입'}
+    <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center justify-center p-6 pt-24">
+      
+      <div className="w-full max-w-md bg-white p-10 md:p-14 shadow-2xl shadow-stone-200/50 border border-stone-100">
+        <div className="text-center mb-12">
+          <h1 className="text-2xl font-serif text-stone-900 tracking-widest uppercase mb-3">
+            {isLoginMode ? 'Login' : 'Create Account'}
           </h1>
-          <p className="text-gray-500 mt-2">
-            {isLoginMode ? '신선한 꽃을 만나보세요.' : '아빠의 꽃, 회원 전용 도매가로 모십니다.'}
-          </p>
+          <div className="h-[1px] w-8 bg-amber-700 mx-auto"></div>
         </div>
 
-        <form onSubmit={isLoginMode ? handleLogin : handleSignUp} className="space-y-4">
+        <form onSubmit={isLoginMode ? handleLogin : handleSignUp} className="space-y-8">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">이메일 (아이디)</label>
-            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-400" placeholder="flower@example.com" />
+            <label className="block text-[10px] tracking-[0.2em] text-stone-400 uppercase mb-2">Email</label>
+            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full border-b border-stone-300 bg-transparent py-2 text-stone-900 font-light focus:outline-none focus:border-stone-900 transition-colors" placeholder="flower@example.com" />
           </div>
           
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">비밀번호</label>
-            <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-400" placeholder={isLoginMode ? "비밀번호 입력" : "8~15자리 (영문+숫자+특수문자 조합)"} />
+            <label className="block text-[10px] tracking-[0.2em] text-stone-400 uppercase mb-2">Password</label>
+            <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full border-b border-stone-300 bg-transparent py-2 text-stone-900 font-light focus:outline-none focus:border-stone-900 transition-colors" placeholder={isLoginMode ? "" : "8~15자리 영문, 숫자, 특수문자"} />
           </div>
 
           {!isLoginMode && (
-            <>
+            <div className="animate-fade-in space-y-8 pt-4">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">성함 또는 상호명 (개인식별)</label>
-                <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-400" placeholder="예) 예쁜꽃방 홍길동" />
+                <label className="block text-[10px] tracking-[0.2em] text-stone-400 uppercase mb-2">Company / Name</label>
+                <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className="w-full border-b border-stone-300 bg-transparent py-2 text-stone-900 font-light focus:outline-none focus:border-stone-900 transition-colors" placeholder="상호명 또는 성함" />
               </div>
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">배송지 주소</label>
-                <div className="flex gap-2 mb-2">
-                  <input type="text" readOnly required value={address} placeholder="주소 검색 버튼을 눌러주세요" className="w-full border border-gray-300 bg-gray-50 cursor-not-allowed rounded-lg p-3 focus:outline-none" />
-                  <button type="button" onClick={() => setIsPostcodeOpen(true)} className="bg-gray-800 text-white font-bold px-4 rounded-lg whitespace-nowrap hover:bg-black">주소 검색</button>
+                <label className="block text-[10px] tracking-[0.2em] text-stone-400 uppercase mb-2">Address</label>
+                <div className="flex gap-4 mb-4">
+                  <input type="text" readOnly required value={address} placeholder="주소 검색" className="w-full border-b border-stone-300 bg-stone-50 py-2 px-3 text-stone-600 font-light focus:outline-none cursor-not-allowed text-sm" />
+                  <button type="button" onClick={() => setIsPostcodeOpen(true)} className="border border-stone-800 text-stone-800 text-[10px] font-bold tracking-widest px-4 py-2 hover:bg-stone-800 hover:text-white transition-colors uppercase whitespace-nowrap">Search</button>
                 </div>
-                <input type="text" value={detailAddress} onChange={(e) => setDetailAddress(e.target.value)} placeholder="나머지 상세 주소 입력 (동, 호수)" className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-400" />
+                <input type="text" value={detailAddress} onChange={(e) => setDetailAddress(e.target.value)} placeholder="상세 주소" className="w-full border-b border-stone-300 bg-transparent py-2 text-stone-900 font-light focus:outline-none focus:border-stone-900 transition-colors" />
               </div>
-            </>
+            </div>
           )}
 
-          <button type="submit" disabled={loading} className="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 mt-6">
-            {loading ? '처리 중...' : (isLoginMode ? '로그인하기' : '가입 완료하기')}
+          <button type="submit" disabled={loading} className="w-full bg-stone-900 text-white text-xs tracking-[0.2em] font-light py-4 hover:bg-stone-800 transition-colors disabled:bg-stone-300 mt-10 uppercase">
+            {loading ? 'Processing...' : (isLoginMode ? 'Sign In' : 'Register')}
           </button>
         </form>
 
-        <div className="mt-6 text-center border-t border-gray-100 pt-6">
-          <p className="text-sm text-gray-600">
-            {isLoginMode ? "아직 회원이 아니신가요?" : "이미 계정이 있으신가요?"}
-            <button onClick={() => { setIsLoginMode(!isLoginMode); setEmail(''); setPassword(''); }} type="button" className="ml-2 text-green-700 font-bold hover:underline focus:outline-none">
-              {isLoginMode ? '회원가입하기' : '로그인하러 가기'}
-            </button>
-          </p>
+        <div className="mt-10 text-center">
+          <button onClick={() => { setIsLoginMode(!isLoginMode); setEmail(''); setPassword(''); }} type="button" className="text-[10px] tracking-widest text-stone-500 hover:text-stone-900 uppercase transition-colors border-b border-transparent hover:border-stone-900 pb-1">
+            {isLoginMode ? 'Create new account' : 'Back to login'}
+          </button>
         </div>
       </div>
 
-      {/* ✨ 주소 검색 모달 */}
       {isPostcodeOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg p-2 w-full max-w-md relative shadow-2xl">
-            <div className="flex justify-between items-center bg-gray-100 p-3 rounded-t-lg mb-2">
-              <h3 className="font-bold text-gray-700">우편번호 검색</h3>
-              <button onClick={() => setIsPostcodeOpen(false)} className="text-gray-500 hover:text-red-500 font-extrabold text-xl px-2">X</button>
+        <div className="fixed inset-0 bg-stone-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md shadow-2xl">
+            <div className="flex justify-between items-center p-4 border-b border-stone-200">
+              <h3 className="font-serif text-stone-900 tracking-widest">ADDRESS SEARCH</h3>
+              <button onClick={() => setIsPostcodeOpen(false)} className="text-stone-400 hover:text-stone-900 text-xl font-light">✕</button>
             </div>
             <DaumPostcodeEmbed onComplete={handleCompletePostcode} style={{ height: '400px' }} />
           </div>

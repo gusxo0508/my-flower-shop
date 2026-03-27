@@ -12,68 +12,36 @@ export default function OrderManagement() {
   const [loading, setLoading] = useState(true);
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
+  useEffect(() => { fetchOrders(); }, []);
 
   const fetchOrders = async () => {
     setLoading(true);
-    
-    // 1. 회원들의 고유번호(member_no)를 미리 싹 가져옵니다.
     const { data: profilesData } = await supabase.from('profiles').select('id, member_no');
     const memberNoMap: Record<string, string> = {};
-    profilesData?.forEach(p => {
-      memberNoMap[p.id] = String(p.member_no || 0).padStart(6, '0');
-    });
+    profilesData?.forEach(p => { memberNoMap[p.id] = String(p.member_no || 0).padStart(6, '0'); });
 
-    // 2. 주문 내역을 가져옵니다. (user_id 추가)
     const { data, error } = await supabase
       .from('orders')
-      .select(`
-        id, user_id, buyer_name, order_qty, status, created_at,
-        products (item_name, variety_name, variety_code, bid_price, direct_price)
-      `)
+      .select(`id, user_id, buyer_name, order_qty, status, created_at, products (item_name, variety_name, variety_code, bid_price, direct_price)`)
       .order('created_at', { ascending: false });
 
-    if (error) {
-      toast.error('주문 내역을 가져오지 못했습니다 😥');
-      setLoading(false);
-      return;
-    }
+    if (error) { toast.error('주문 내역 로딩 실패'); setLoading(false); return; }
 
     const groups = (data || []).reduce((acc: any, order: any) => {
-      const dateKey = new Date(order.created_at).toLocaleString('ko-KR', {
-        year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
-      });
+      const dateKey = new Date(order.created_at).toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
       const groupKey = `${dateKey}_${order.buyer_name}`;
-
-      const product = order.products || { item_name: '알수없음', variety_name: '알수없음', variety_code: '-', direct_price: 0 };
+      const product = order.products || { item_name: '알수없음', variety_name: '-', variety_code: '-', direct_price: 0 };
       const price = product.direct_price * order.order_qty;
-
-      // ✨ 아까 만든 맵에서 유저의 6자리 고유번호를 매칭시킵니다.
       const memberNumber = memberNoMap[order.user_id] || '000000';
 
       if (!acc[groupKey]) {
-        acc[groupKey] = {
-          idKey: groupKey,
-          dateString: dateKey,
-          buyerName: order.buyer_name,
-          memberNo: memberNumber, // 그룹에 고유번호 저장
-          status: order.status,
-          totalPrice: 0,
-          totalQty: 0,
-          itemCount: 0,
-          orderIds: [],
-          items: []
-        };
+        acc[groupKey] = { idKey: groupKey, dateString: dateKey, buyerName: order.buyer_name, memberNo: memberNumber, status: order.status, totalPrice: 0, totalQty: 0, itemCount: 0, orderIds: [], items: [] };
       }
-
       acc[groupKey].items.push({ ...order, product, price });
       acc[groupKey].totalPrice += price;
       acc[groupKey].totalQty += order.order_qty;
       acc[groupKey].itemCount += 1;
       acc[groupKey].orderIds.push(order.id);
-
       return acc;
     }, {});
 
@@ -82,77 +50,55 @@ export default function OrderManagement() {
   };
 
   const toggleGroup = (idKey: string) => {
-    if (expandedGroups.includes(idKey)) {
-      setExpandedGroups(expandedGroups.filter(key => key !== idKey));
-    } else {
-      setExpandedGroups([...expandedGroups, idKey]);
-    }
+    if (expandedGroups.includes(idKey)) setExpandedGroups(expandedGroups.filter(key => key !== idKey));
+    else setExpandedGroups([...expandedGroups, idKey]);
   };
 
   const updateOrderStatus = async (orderIds: string[], newStatus: string) => {
     const { error } = await supabase.from('orders').update({ status: newStatus }).in('id', orderIds);
-    if (error) {
-      toast.error('상태 업데이트에 실패했습니다.');
-    } else {
-      toast.success(`장바구니 전체가 '${newStatus}'(으)로 변경되었습니다 ✅`);
-      fetchOrders(); 
-    }
+    if (error) toast.error('상태 변경 실패');
+    else { toast.success(`'${newStatus}' 처리 완료`); fetchOrders(); }
   };
 
   const downloadExcel = () => {
     const excelData: any[] = [];
-
     groupedOrders.forEach(group => {
       group.items.forEach((item: any) => {
-        excelData.push({
-          '주문일시': group.dateString,
-          '회원번호': group.memberNo, // ✨ 엑셀에 6자리 고유번호 추가
-          '주문자(상호명)': group.buyerName,
-          '품목명': item.product.item_name,
-          '품종명': item.product.variety_name,
-          '품목코드': item.product.variety_code || '-',
-          '직판단가(원)': item.product.direct_price,
-          '주문수량(속)': item.order_qty,
-          '상품합계(원)': item.price,
-          '진행상태': group.status
-        });
+        excelData.push({ '주문일시': group.dateString, '회원번호': group.memberNo, '주문자(상호명)': group.buyerName, '품목명': item.product.item_name, '품종명': item.product.variety_name, '품목코드': item.product.variety_code || '-', '직판단가(원)': item.product.direct_price, '주문수량(속)': item.order_qty, '상품합계(원)': item.price, '진행상태': group.status });
       });
     });
-    
     const worksheet = XLSX.utils.json_to_sheet(excelData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "상세주문내역");
-    XLSX.writeFile(workbook, `아빠의꽃_상세주문내역_${new Date().toLocaleDateString('ko-KR')}.xlsx`);
-    toast.success('상세 엑셀 파일이 다운로드되었습니다 📥');
+    XLSX.writeFile(workbook, `아빠의꽃_주문내역_${new Date().toLocaleDateString('ko-KR')}.xlsx`);
   };
 
   const chartData = groupedOrders.slice(0, 7).map(g => ({ name: g.buyerName, 매출액: g.totalPrice })).reverse();
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <main className="max-w-6xl mx-auto bg-white p-8 rounded-xl shadow-lg">
-        <div className="flex justify-between items-end mb-8 border-b border-gray-200 pb-4">
-          <h1 className="text-3xl font-bold text-gray-800">📦 실시간 주문 관리 장부</h1>
-          <div className="flex gap-3">
-            <button onClick={downloadExcel} className="bg-green-600 text-white font-bold px-4 py-2 rounded-lg hover:bg-green-700 shadow-sm">
-              📥 상세 엑셀 다운로드
-            </button>
-            <button onClick={fetchOrders} className="text-blue-600 hover:text-blue-800 font-bold bg-blue-50 px-4 py-2 rounded-lg">
-              🔄 새로고침
-            </button>
+    <div className="min-h-screen bg-[#FAFAFA] pt-32 pb-20 px-6 md:px-10">
+      <main className="max-w-7xl mx-auto">
+        <header className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-stone-200 pb-8">
+          <div>
+            <h3 className="text-[10px] tracking-[0.3em] text-amber-700 mb-2 uppercase font-bold">Admin Console</h3>
+            <h1 className="text-3xl font-serif text-stone-900 tracking-wide">실시간 주문 장부</h1>
           </div>
-        </div>
+          <div className="flex gap-4">
+            <button onClick={downloadExcel} className="border border-stone-900 text-stone-900 px-6 py-2.5 text-[10px] tracking-[0.2em] uppercase hover:bg-stone-900 hover:text-white transition-all">Download Excel</button>
+            <button onClick={fetchOrders} className="bg-stone-100 text-stone-600 px-6 py-2.5 text-[10px] tracking-[0.2em] uppercase hover:bg-stone-200 transition-all">Refresh</button>
+          </div>
+        </header>
 
         {!loading && groupedOrders.length > 0 && (
-          <div className="mb-10 bg-gray-50 p-6 rounded-xl border border-gray-200 shadow-inner">
-            <h2 className="text-lg font-bold text-gray-700 mb-4">📈 최근 주문 매출 추이</h2>
+          <div className="mb-16 bg-white p-10 border border-stone-200 shadow-xl shadow-stone-200/20">
+            <h2 className="text-xs font-bold text-stone-400 tracking-[0.2em] uppercase mb-8">Sales Trend (Last 7 Orders)</h2>
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
-                  <XAxis dataKey="name" stroke="#8884d8" fontSize={12} />
-                  <YAxis fontSize={12} tickFormatter={(value) => `${(value / 10000)}만`} />
-                  <Tooltip formatter={(value: any) => `${Number(value).toLocaleString()}원`} />
-                  <Bar dataKey="매출액" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+                  <XAxis dataKey="name" stroke="#a8a29e" fontSize={10} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#a8a29e" fontSize={10} tickFormatter={(value) => `${(value / 10000)}만`} tickLine={false} axisLine={false} />
+                  <Tooltip cursor={{fill: '#f5f5f4'}} contentStyle={{ backgroundColor: '#1c1917', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '12px' }} formatter={(value: any) => `${Number(value).toLocaleString()} KRW`} />
+                  <Bar dataKey="매출액" fill="#065f46" radius={[2, 2, 0, 0]} barSize={40} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -160,80 +106,77 @@ export default function OrderManagement() {
         )}
 
         {loading ? (
-          <div className="text-center py-10 text-gray-500">주문 내역을 불러오는 중입니다...</div>
+           <div className="text-center py-32 text-stone-400 text-xs tracking-widest bg-white border border-stone-200">LOADING...</div>
         ) : groupedOrders.length === 0 ? (
-          <div className="text-center py-20 text-gray-500 border-2 border-dashed rounded-xl">
-            아직 들어온 주문이 없습니다.
-          </div>
+          <div className="text-center py-32 text-stone-400 text-xs tracking-widest border border-stone-200 bg-white">NO ORDERS YET</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-gray-800 text-white">
-                <tr>
-                  <th className="p-4 rounded-tl-lg">주문일시</th>
-                  <th className="p-4">주문자 정보</th>
-                  <th className="p-4 text-center">주문 요약</th>
-                  <th className="p-4 text-right">총 결제 금액</th>
-                  <th className="p-4 text-center">진행 상태</th>
-                  <th className="p-4 text-center rounded-tr-lg">관리</th>
+          <div className="bg-white border-t border-b border-stone-900 overflow-x-auto shadow-2xl shadow-stone-200/40">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-stone-50 border-b border-stone-200">
+                  <th className="p-5 font-medium text-stone-500 text-[10px] tracking-[0.2em] uppercase w-10 text-center">+/-</th>
+                  <th className="p-5 font-medium text-stone-500 text-[10px] tracking-[0.2em] uppercase">Date</th>
+                  <th className="p-5 font-medium text-stone-500 text-[10px] tracking-[0.2em] uppercase">Buyer Info</th>
+                  <th className="p-5 font-medium text-stone-500 text-[10px] tracking-[0.2em] uppercase text-center">Summary</th>
+                  <th className="p-5 text-right font-medium text-stone-500 text-[10px] tracking-[0.2em] uppercase">Total Amount</th>
+                  <th className="p-5 text-center font-medium text-stone-500 text-[10px] tracking-[0.2em] uppercase">Status</th>
+                  <th className="p-5 text-center font-medium text-stone-500 text-[10px] tracking-[0.2em] uppercase">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-stone-100">
                 {groupedOrders.map((group) => {
                   const isExpanded = expandedGroups.includes(group.idKey);
                   const representativeItem = group.items[0].product.item_name;
-                  const summaryText = group.itemCount > 1 ? `${representativeItem} 외 ${group.itemCount - 1}건` : representativeItem;
+                  const summaryText = group.itemCount > 1 ? `${representativeItem} +${group.itemCount - 1}` : representativeItem;
 
                   return (
                     <Fragment key={group.idKey}>
-                      <tr className="hover:bg-blue-50 transition-colors cursor-pointer bg-white" onClick={() => toggleGroup(group.idKey)}>
-                        <td className="p-4 text-sm text-gray-600 font-medium">
-                          {isExpanded ? '🔽' : '▶️'} {group.dateString}
+                      <tr className={`hover:bg-stone-50 transition-colors cursor-pointer ${isExpanded ? 'bg-stone-50' : 'bg-white'}`} onClick={() => toggleGroup(group.idKey)}>
+                        <td className="p-5 text-center text-stone-400 text-lg font-light">{isExpanded ? '−' : '+'}</td>
+                        <td className="p-5 text-xs text-stone-500 tracking-wider font-light">{group.dateString}</td>
+                        <td className="p-5">
+                          <div className="font-medium text-stone-900 text-sm tracking-wide">{group.buyerName}</div>
+                          <div className="text-[10px] font-mono text-amber-700 tracking-widest mt-1">NO. {group.memberNo}</div>
                         </td>
-                        <td className="p-4">
-                          {/* ✨ 화면에서도 6자리 회원번호를 띄워줍니다 */}
-                          <div className="font-bold text-gray-900 text-lg">{group.buyerName}</div>
-                          <div className="text-xs font-mono text-blue-600 font-bold">No. {group.memberNo}</div>
+                        <td className="p-5 text-center text-stone-700 text-sm font-light">{summaryText} <span className="text-[10px] text-stone-400 ml-1">({group.totalQty} EA)</span></td>
+                        <td className="p-5 text-right font-serif text-lg text-stone-900 tracking-wide">{group.totalPrice.toLocaleString()}<span className="text-[10px] text-stone-400 ml-1">KRW</span></td>
+                        <td className="p-5 text-center">
+                          <span className={`px-3 py-1 text-[10px] tracking-widest uppercase border ${group.status === '입금대기' ? 'border-amber-300 text-amber-700 bg-amber-50' : 'border-stone-800 text-stone-800 bg-transparent'}`}>{group.status}</span>
                         </td>
-                        <td className="p-4 text-center text-gray-700 font-bold">{summaryText} <span className="text-sm font-normal text-gray-500">(총 {group.totalQty}속)</span></td>
-                        <td className="p-4 text-right font-extrabold text-red-600 text-lg">{group.totalPrice.toLocaleString()}원</td>
-                        <td className="p-4 text-center">
-                          <span className={`px-3 py-1 rounded-full text-sm font-bold ${group.status === '입금대기' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>{group.status}</span>
-                        </td>
-                        <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
+                        <td className="p-5 text-center" onClick={(e) => e.stopPropagation()}>
                           {group.status === '입금대기' ? (
-                            <button onClick={() => updateOrderStatus(group.orderIds, '입금완료')} className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-black text-sm font-bold shadow-md">입금 확인하기</button>
+                            <button onClick={() => updateOrderStatus(group.orderIds, '입금완료')} className="bg-stone-900 text-white px-4 py-2 text-[10px] tracking-widest uppercase hover:bg-stone-800 transition-colors">Confirm</button>
                           ) : (
-                            <button onClick={() => updateOrderStatus(group.orderIds, '입금대기')} className="bg-gray-200 text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-300 text-sm font-bold">대기로 돌리기</button>
+                            <button onClick={() => updateOrderStatus(group.orderIds, '입금대기')} className="border border-stone-300 text-stone-500 px-4 py-2 text-[10px] tracking-widest uppercase hover:bg-stone-100 transition-colors">Undo</button>
                           )}
                         </td>
                       </tr>
 
                       {isExpanded && (
                         <tr>
-                          <td colSpan={6} className="p-0 border-b border-gray-200 bg-gray-50">
-                            <div className="p-4 pl-12">
-                              <table className="w-full text-sm text-left text-gray-600 bg-white border border-gray-200 rounded-lg overflow-hidden shadow-inner">
-                                <thead className="bg-gray-100 border-b border-gray-200">
-                                  <tr>
-                                    <th className="p-2 pl-4 text-center text-xs text-gray-400">품목코드</th>
-                                    <th className="p-2">품목명 (품종)</th>
-                                    <th className="p-2 text-right">단가(직판가)</th>
-                                    <th className="p-2 text-right">주문 수량</th>
-                                    <th className="p-2 text-right pr-4">합계</th>
+                          <td colSpan={7} className="p-0 border-b border-stone-200 bg-[#FAFAFA]">
+                            <div className="p-6 md:pl-20 md:pr-10">
+                              <table className="w-full text-left bg-white border border-stone-200">
+                                <thead>
+                                  <tr className="bg-stone-50 border-b border-stone-200">
+                                    <th className="p-3 pl-6 text-xs font-light tracking-[0.2em] text-stone-400 uppercase">Code</th>
+                                    <th className="p-3 text-xs font-light tracking-[0.2em] text-stone-400 uppercase">Product</th>
+                                    <th className="p-3 text-right text-xs font-light tracking-[0.2em] text-stone-400 uppercase">Unit Price</th>
+                                    <th className="p-3 text-right text-xs font-light tracking-[0.2em] text-stone-400 uppercase">Qty</th>
+                                    <th className="p-3 pr-6 text-right text-xs font-light tracking-[0.2em] text-stone-400 uppercase">Subtotal</th>
                                   </tr>
                                 </thead>
-                                <tbody>
+                                <tbody className="divide-y divide-stone-100">
                                   {group.items.map((item: any) => (
-                                    <tr key={item.id} className="border-b border-gray-100 last:border-0 hover:bg-yellow-50">
-                                      <td className="p-2 pl-4 text-center text-gray-400 font-mono text-xs">{item.product.variety_code || '-'}</td>
-                                      <td className="p-2">
-                                        <span className="font-bold text-gray-800">{item.product.item_name}</span> 
-                                        <span className="ml-1 text-gray-500">({item.product.variety_name})</span>
+                                    <tr key={item.id} className="hover:bg-stone-50">
+                                      <td className="p-3 pl-6 text-stone-400 font-mono text-[10px] tracking-widest">{item.product.variety_code || '-'}</td>
+                                      <td className="p-3">
+                                        <span className="font-light text-stone-800 text-sm">{item.product.item_name}</span> 
+                                        <span className="ml-2 text-[10px] tracking-wider text-stone-400 uppercase">({item.product.variety_name})</span>
                                       </td>
-                                      <td className="p-2 text-right">{item.product.direct_price.toLocaleString()}원</td>
-                                      <td className="p-2 text-right text-blue-600 font-bold">{item.order_qty} 속</td>
-                                      <td className="p-2 text-right pr-4 font-bold">{item.price.toLocaleString()}원</td>
+                                      <td className="p-3 text-right font-light text-stone-600 text-sm">{item.product.direct_price.toLocaleString()}</td>
+                                      <td className="p-3 text-right font-medium text-stone-800 text-sm">{item.order_qty}</td>
+                                      <td className="p-3 pr-6 text-right font-serif text-stone-900 tracking-wide">{item.price.toLocaleString()}</td>
                                     </tr>
                                   ))}
                                 </tbody>

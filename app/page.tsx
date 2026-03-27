@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
-import { useRouter } from 'next/navigation'; // ✨ 라우터 추가
+import { useRouter } from 'next/navigation';
 
 interface ComparisonData {
   id: string;
@@ -16,26 +16,18 @@ interface ComparisonData {
 }
 
 export default function Home() {
-  const router = useRouter(); // ✨ 라우터 선언
+  const router = useRouter();
   
   const [comparisons, setComparisons] = useState<ComparisonData[]>([]);
-  const [latestNotices, setLatestNotices] = useState<any[]>([]); // ✨ 최신 공지 3개 담을 배열
+  const [latestNotices, setLatestNotices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
-      // 1. 최신 공지사항 3개 가져오기
-      const { data: noticeData } = await supabase
-        .from('notices')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(3);
-      
+      const { data: noticeData } = await supabase.from('notices').select('*').order('created_at', { ascending: false }).limit(3);
       if (noticeData) setLatestNotices(noticeData);
 
-      // 2. 아빠 꽃 비교 데이터 가져오기
       const { data: fatherProducts } = await supabase.from('products').select('*').gt('stock_qty', 0).order('item_name', { ascending: true }); 
-
       if (!fatherProducts || fatherProducts.length === 0) {
         setLoading(false);
         return;
@@ -66,37 +58,55 @@ export default function Home() {
   const today = new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <section className="bg-green-800 text-white py-20 px-6 text-center">
-        <h1 className="text-4xl md:text-5xl font-extrabold mb-6 tracking-tight">
-          오늘 aT 경매 최고가를 찍은 그 꽃,<br/>중간 마진 없이 직배송합니다.
-        </h1>
-        <p className="text-lg md:text-xl text-green-100 mb-10 max-w-2xl mx-auto font-light">
-          아빠가 직접 키워 시장 점유율 1위를 달성한 최상급 화훼.<br/>
-          시중 도매가보다 합리적인 '아빠의 직판가'로 플로리스트 여러분을 모십니다.
-        </p>
-        <Link href="/shop" className="bg-yellow-400 text-green-900 px-10 py-4 rounded-full font-bold text-xl hover:bg-yellow-300 shadow-lg inline-block transition-transform hover:scale-105">
-          오늘의 꽃 구매하기
-        </Link>
+    <div className="bg-[#FAFAFA]">
+      
+      {/* ✨ 프레스티지 히어로 섹션 (호텔 메인 스타일) */}
+      <section className="relative h-screen min-h-[700px] flex items-center justify-center text-center overflow-hidden">
+        {/* 우아한 다크 그레이/브라운 배경 톤 */}
+        <div className="absolute inset-0 bg-stone-900">
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60"></div>
+        </div>
+        
+        <div className="relative z-10 text-stone-100 px-4 mt-20">
+          <h3 className="text-xs md:text-sm tracking-[0.3em] text-amber-500 mb-8 font-light">
+            THE MASTERPIECE OF NATURE
+          </h3>
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif font-light tracking-wide mb-8 leading-[1.3]">
+            자연의 예술, <br className="md:hidden" />그 정점을 담다
+          </h1>
+          <p className="text-sm md:text-base text-stone-300 mb-16 max-w-2xl mx-auto font-light tracking-wider leading-relaxed">
+            매일 새벽, 가장 완벽한 수형을 갖춘 최상위 등급의 화훼만을 선별합니다.<br className="hidden md:block"/>
+            경매장의 복잡한 유통을 거치지 않은 프라이빗 직판가를 경험하십시오.
+          </p>
+          <Link href="/shop" className="border border-stone-300/50 text-stone-100 px-10 py-4 text-sm tracking-[0.2em] hover:bg-stone-100 hover:text-stone-900 transition-all duration-500 backdrop-blur-sm uppercase">
+            Discover Market
+          </Link>
+        </div>
       </section>
 
-      {/* 📢 최신 공지사항 3개 리스트 (클릭 시 상세 이동) */}
+      {/* ✨ 미니멀 & 럭셔리 공지사항 섹션 */}
       {latestNotices.length > 0 && (
-        <section className="max-w-5xl mx-auto mt-[-2rem] relative z-10 px-4">
-          <div className="bg-white border-t-4 border-yellow-400 shadow-lg rounded-xl overflow-hidden">
-            <div className="bg-yellow-50 px-6 py-3 border-b border-gray-100 flex justify-between items-center">
-              <h2 className="font-bold text-yellow-800 flex items-center gap-2"><span>📌</span> 농장 최신 소식</h2>
-              <button onClick={() => router.push('/notices')} className="text-sm font-bold text-gray-500 hover:text-gray-800">전체보기 →</button>
+        <section className="max-w-5xl mx-auto -mt-24 relative z-20 px-6">
+          <div className="bg-white border border-stone-200 shadow-xl">
+            <div className="px-10 py-6 border-b border-stone-100 flex justify-between items-center bg-[#FCFCFC]">
+              <h2 className="font-serif text-lg text-stone-900 tracking-widest">NOTICE</h2>
+              <button onClick={() => router.push('/notices')} className="text-xs font-light tracking-widest text-stone-500 hover:text-amber-700 transition-colors uppercase">
+                View All
+              </button>
             </div>
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-stone-100">
               {latestNotices.map(notice => (
                 <div 
                   key={notice.id} 
-                  onClick={() => router.push(`/notices/${notice.id}`)} // ✨ 상세 페이지로 라우팅
-                  className="px-6 py-4 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition-colors group"
+                  onClick={() => router.push(`/notices/${notice.id}`)}
+                  className="px-10 py-6 flex flex-col md:flex-row justify-between md:items-center cursor-pointer hover:bg-stone-50 transition-colors group gap-2"
                 >
-                  <span className="font-bold text-gray-800 group-hover:text-green-700 transition-colors">{notice.title}</span>
-                  <span className="text-sm text-gray-400">{new Date(notice.created_at).toLocaleDateString('ko-KR')}</span>
+                  <span className="font-light text-stone-800 text-lg group-hover:text-amber-700 transition-colors truncate">
+                    {notice.title}
+                  </span>
+                  <span className="text-xs text-stone-400 font-light tracking-widest whitespace-nowrap">
+                    {new Date(notice.created_at).toLocaleDateString('ko-KR')}
+                  </span>
                 </div>
               ))}
             </div>
@@ -104,60 +114,51 @@ export default function Home() {
         </section>
       )}
 
-      {/* 압도적 가치 증명 테이블 섹션 */}
-      <section className="py-20 px-4 max-w-5xl mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">📊 {today} 아빠꽃 경매 성적 & 직판가 비교</h2>
-          <p className="text-gray-600">오늘 새벽 aT 공판장에서 검증된 품질. 중도매인 마진(약 30%)을 뺀 가격을 확인하세요.</p>
+      {/* ✨ 절제된 프라이빗 마켓 리포트 (데이터 테이블) */}
+      <section className="py-32 px-6 max-w-5xl mx-auto">
+        <div className="text-center mb-20">
+          <h3 className="text-xs tracking-[0.2em] text-amber-700 mb-4 font-bold uppercase">Today's Selection</h3>
+          <h2 className="text-3xl font-serif text-stone-900 mb-6 tracking-wide">프라이빗 직판가 리포트</h2>
+          <div className="h-[1px] w-12 bg-stone-300 mx-auto mb-6"></div>
+          <p className="text-stone-500 font-light tracking-wider text-sm">
+            {today} 기준, 투명하게 공개되는 aT 경매 시세와 아빠의 꽃 직판가입니다.
+          </p>
         </div>
 
         {loading ? (
-          <div className="text-center py-20 text-gray-500 font-bold bg-white rounded-2xl shadow-sm border border-gray-200">
-            실시간 유통공사 시세를 분석하고 있습니다...
+          <div className="flex justify-center py-20">
+            <div className="text-stone-400 font-light tracking-widest text-sm animate-pulse">
+              LOADING DATA...
+            </div>
           </div>
         ) : comparisons.length === 0 ? (
-          <div className="text-center py-20 text-gray-500 bg-white rounded-2xl shadow-sm border border-gray-200">
-            현재 판매 중인 꽃이 없습니다.
+          <div className="text-center py-24 text-stone-400 bg-white border border-stone-200 font-light tracking-widest text-sm">
+            NO FLOWERS AVAILABLE TODAY
           </div>
         ) : (
-          <div className="overflow-hidden bg-white rounded-2xl shadow-md border border-gray-200">
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-gray-800 text-white">
+          <div className="bg-white border-t border-b border-stone-900 overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
                 <tr>
-                  <th className="p-4 font-bold rounded-tl-lg">품목명</th>
-                  <th className="p-4 font-bold">품종 (등급)</th>
-                  <th className="p-4 text-right font-bold text-gray-300">aT 평균 시세</th>
-                  <th className="p-4 text-right font-bold text-green-300">🌻 아빠의 직판가</th>
-                  <th className="p-4 text-right font-bold rounded-tr-lg">절약 금액</th>
+                  <th className="p-6 font-medium text-stone-500 text-xs tracking-[0.1em] border-b border-stone-200 uppercase">Item</th>
+                  <th className="p-6 font-medium text-stone-500 text-xs tracking-[0.1em] border-b border-stone-200 uppercase">Variety (Grade)</th>
+                  <th className="p-6 text-right font-medium text-stone-500 text-xs tracking-[0.1em] border-b border-stone-200 uppercase">Market Avg</th>
+                  <th className="p-6 text-right font-medium text-stone-900 text-xs tracking-[0.1em] border-b border-stone-200 uppercase bg-stone-50">Private Price</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-stone-100">
                 {comparisons.map((item) => {
-                  const saveAmount = item.marketAvgPrice - item.fatherPrice;
-                  const isCheaper = saveAmount > 0;
-                  const savePercent = isCheaper ? Math.round((saveAmount / item.marketAvgPrice) * 100) : 0;
-
                   return (
-                    <tr key={item.id} className="hover:bg-green-50 transition-colors">
-                      <td className="p-4 font-bold text-gray-900">{item.itemName}</td>
-                      <td className="p-4 text-gray-700">
-                        {item.varietyName} <span className="text-xs text-gray-400">({item.grade})</span>
+                    <tr key={item.id} className="hover:bg-stone-50/50 transition-colors">
+                      <td className="p-6 font-light text-stone-900 text-lg">{item.itemName}</td>
+                      <td className="p-6 text-stone-600 font-light">
+                        {item.varietyName} <span className="text-[10px] tracking-widest border border-stone-300 px-2 py-1 ml-2 text-stone-500 uppercase">{item.grade}</span>
                       </td>
-                      <td className="p-4 text-right text-gray-400 line-through">
-                        {item.marketAvgPrice.toLocaleString()}원
+                      <td className="p-6 text-right text-stone-400 font-light tracking-wider">
+                        {item.marketAvgPrice.toLocaleString()} KRW
                       </td>
-                      <td className="p-4 text-right font-extrabold text-green-700 text-lg">
-                        {item.fatherPrice.toLocaleString()}원
-                      </td>
-                      <td className="p-4 text-right font-bold">
-                        {isCheaper ? (
-                          <div className="flex items-center justify-end gap-2 text-blue-600">
-                            <span>{saveAmount.toLocaleString()}원</span>
-                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{savePercent}% ↓</span>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
+                      <td className="p-6 text-right font-medium text-stone-900 text-lg tracking-wider bg-stone-50/50">
+                        {item.fatherPrice.toLocaleString()} KRW
                       </td>
                     </tr>
                   );

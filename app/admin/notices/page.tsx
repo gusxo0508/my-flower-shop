@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { toast } from 'react-hot-toast'; // ✨ 토스트 추가
+import { toast } from 'react-hot-toast';
 
 export default function AdminNotices() {
   const [notices, setNotices] = useState<any[]>([]);
@@ -26,19 +26,17 @@ export default function AdminNotices() {
   const handlePostNotice = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !content) {
-      toast.error('제목과 내용을 모두 입력해주세요 ✏️');
+      toast.error('제목과 내용을 모두 입력해주세요.');
       return;
     }
 
     setLoading(true);
-    const { error } = await supabase
-      .from('notices')
-      .insert([{ title, content }]);
+    const { error } = await supabase.from('notices').insert([{ title, content }]);
 
     if (error) {
-      toast.error('공지사항 등록 실패: ' + error.message);
+      toast.error('등록 실패: ' + error.message);
     } else {
-      toast.success('✅ 공지사항이 성공적으로 등록되었습니다!');
+      toast.success('공지사항이 등록되었습니다.');
       setTitle('');
       setContent('');
       fetchNotices();
@@ -47,12 +45,10 @@ export default function AdminNotices() {
   };
 
   const handleDeleteNotice = async (id: string) => {
-    // 삭제 전 확인은 브라우저 기본 confirm이 안전하므로 그대로 둡니다.
-    if (!window.confirm('정말 이 공지사항을 삭제하시겠습니까?')) return;
-    
+    if (!window.confirm('삭제하시겠습니까?')) return;
     const { error } = await supabase.from('notices').delete().eq('id', id);
     if (!error) {
-      toast.success('삭제되었습니다 🗑️');
+      toast.success('삭제되었습니다.');
       fetchNotices();
     } else {
       toast.error('삭제에 실패했습니다.');
@@ -60,58 +56,80 @@ export default function AdminNotices() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <main className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-lg">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8 border-b border-gray-200 pb-4">📢 공지사항 관리</h1>
+    <div className="min-h-screen bg-[#FAFAFA] pt-32 pb-20 px-6 md:px-10">
+      <main className="max-w-4xl mx-auto">
         
-        <form onSubmit={handlePostNotice} className="bg-green-50 p-6 rounded-xl border border-green-200 mb-10">
-          <h2 className="text-lg font-bold text-green-800 mb-4">새 공지사항 작성</h2>
-          <div className="mb-4">
+        <header className="mb-16 border-b border-stone-200 pb-8 text-center">
+          <h3 className="text-[10px] tracking-[0.3em] text-amber-700 mb-4 uppercase font-bold">Admin Console</h3>
+          <h1 className="text-3xl font-serif text-stone-900 tracking-wide">공지사항 관리</h1>
+        </header>
+        
+        {/* ✨ 고급스러운 작성 에디터 폼 */}
+        <form onSubmit={handlePostNotice} className="bg-white p-10 md:p-14 border border-stone-200 shadow-xl shadow-stone-200/20 mb-20">
+          <h2 className="text-[10px] font-bold text-stone-400 tracking-[0.2em] uppercase mb-10 border-b border-stone-100 pb-4">Create New Notice</h2>
+          
+          <div className="mb-8">
             <input 
               type="text" 
-              placeholder="제목 (예: 3월 28일 출하 일정 안내)" 
+              placeholder="제목 (Title)" 
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg p-3 font-bold focus:ring-2 focus:ring-green-500"
+              className="w-full bg-transparent border-b border-stone-300 py-4 text-xl font-light text-stone-900 focus:outline-none focus:border-stone-900 transition-colors"
             />
           </div>
-          <div className="mb-4">
+          
+          <div className="mb-10">
             <textarea 
-              placeholder="내용을 입력하세요. (예: 내일 비 예보로 인해 작업이 지연될 수 있습니다.)" 
-              rows={4}
+              placeholder="본문 내용을 입력하세요. (Content)" 
+              rows={8}
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500"
+              className="w-full bg-transparent border-b border-stone-300 py-4 text-base font-light text-stone-700 focus:outline-none focus:border-stone-900 transition-colors resize-none leading-loose"
             />
           </div>
-          <div className="text-right">
+          
+          <div className="flex justify-end">
             <button 
               type="submit" 
               disabled={loading}
-              className="bg-green-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400"
+              className="bg-stone-900 text-white text-[10px] tracking-[0.2em] px-12 py-4 uppercase hover:bg-stone-800 transition-colors disabled:bg-stone-300 shadow-md"
             >
-              {loading ? '등록 중...' : '플로리스트들에게 공지 띄우기'}
+              {loading ? 'Processing...' : 'Post Notice'}
             </button>
           </div>
         </form>
 
-        <h2 className="text-xl font-bold text-gray-800 mb-4">등록된 공지사항 목록</h2>
-        <div className="space-y-4">
+        {/* ✨ 미니멀한 등록된 공지사항 리스트 */}
+        <div>
+          <h2 className="text-[10px] font-bold text-stone-400 tracking-[0.2em] uppercase mb-6">Published Notices</h2>
+          
           {notices.length === 0 ? (
-            <div className="text-center text-gray-500 py-10 border border-dashed rounded-lg">등록된 공지사항이 없습니다.</div>
+            <div className="text-center py-24 text-stone-400 text-xs tracking-widest border border-stone-200 bg-white">
+              등록된 공지사항이 없습니다.
+            </div>
           ) : (
-            notices.map(notice => (
-              <div key={notice.id} className="border border-gray-200 p-5 rounded-lg hover:shadow-md transition-shadow">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-bold text-lg text-gray-900">{notice.title}</h3>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-gray-500">{new Date(notice.created_at).toLocaleDateString('ko-KR')}</span>
-                    <button onClick={() => handleDeleteNotice(notice.id)} className="text-red-500 text-sm font-bold hover:underline">삭제</button>
+            <div className="bg-white border-t border-b border-stone-900">
+              <div className="divide-y divide-stone-100">
+                {notices.map(notice => (
+                  <div key={notice.id} className="p-6 md:p-8 flex flex-col md:flex-row justify-between md:items-center hover:bg-stone-50 transition-colors group">
+                    <div className="mb-4 md:mb-0">
+                      <h3 className="text-lg font-light text-stone-800 tracking-wide group-hover:text-amber-700 transition-colors">{notice.title}</h3>
+                    </div>
+                    <div className="flex items-center gap-6 md:gap-10">
+                      <span className="text-[10px] tracking-widest text-stone-400 uppercase">
+                        {new Date(notice.created_at).toLocaleDateString('ko-KR')}
+                      </span>
+                      <button 
+                        onClick={() => handleDeleteNotice(notice.id)} 
+                        className="text-[10px] tracking-[0.2em] text-stone-300 hover:text-red-600 transition-colors uppercase font-bold"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <p className="text-gray-700 whitespace-pre-wrap">{notice.content}</p>
+                ))}
               </div>
-            ))
+            </div>
           )}
         </div>
       </main>

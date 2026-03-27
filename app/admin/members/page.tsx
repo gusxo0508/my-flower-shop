@@ -30,7 +30,6 @@ export default function MemberManagement() {
 
   const fetchMembersAndSort = async () => {
     setLoading(true);
-    // ✨ profiles 데이터에서 member_no를 함께 불러옵니다.
     const { data: users, error: userError } = await supabase.from('profiles').select('*').eq('role', 'user');
     const { data: orders, error: orderError } = await supabase.from('orders').select('user_id, created_at');
 
@@ -92,136 +91,142 @@ export default function MemberManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <main className="max-w-6xl mx-auto bg-white p-8 rounded-xl shadow-lg">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 border-b border-gray-200 pb-4 gap-4">
+    <div className="min-h-screen bg-[#FAFAFA] pt-32 pb-20 px-6 md:px-10">
+      <main className="max-w-7xl mx-auto">
+        <header className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-stone-200 pb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">👥 단골 플로리스트 관리</h1>
-            <p className="text-gray-600 mt-2">최신 구매일이 높은 회원 순으로 자동 정렬됩니다.</p>
+            <h3 className="text-[10px] tracking-[0.3em] text-amber-700 mb-2 uppercase font-bold">Admin Console</h3>
+            <h1 className="text-3xl font-serif text-stone-900 tracking-wide">회원 관리 (CRM)</h1>
           </div>
           
-          <div className="w-full md:w-72 relative">
-            <span className="absolute inset-y-0 left-3 flex items-center text-gray-400">🔍</span>
+          <div className="w-full md:w-80 relative flex items-center">
+            <span className="text-[10px] tracking-[0.2em] text-stone-400 uppercase mr-4">Search</span>
             <input 
               type="text" 
-              placeholder="이메일 검색..." 
+              placeholder="이메일 검색" 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-medium"
+              className="flex-1 bg-transparent border-b border-stone-300 py-2 text-sm text-stone-800 font-light focus:outline-none focus:border-stone-900 transition-colors"
             />
           </div>
-        </div>
+        </header>
 
         {loading ? (
-          <div className="text-center py-20 text-gray-500">회원 목록을 분석 중입니다...</div>
+          <div className="text-center py-32 text-stone-400 text-xs tracking-widest border border-stone-200 bg-white animate-pulse">LOADING DATA...</div>
         ) : displayedMembers.length === 0 ? (
-          <div className="text-center py-20 text-gray-500 border-2 border-dashed rounded-xl">해당하는 회원이 없습니다.</div>
+          <div className="text-center py-32 text-stone-400 text-xs tracking-widest border border-stone-200 bg-white">NO MEMBERS FOUND</div>
         ) : (
-          <div className="overflow-hidden bg-white rounded-xl border border-gray-200 shadow-sm">
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-gray-800 text-white">
-                <tr>
-                  <th className="p-4">고유번호 (가입일)</th>
-                  <th className="p-4">상호명 (이름)</th>
-                  <th className="p-4">최신 구매일</th>
-                  <th className="p-4">아이디(이메일)</th>
-                  <th className="p-4 text-center">상세 로그</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {displayedMembers.map((member) => {
-                  const hasOrder = member.latestOrderDate !== '1970-01-01T00:00:00.000Z';
-                  // ✨ 6자리 고유번호 포맷팅 (예: 1 -> 000001)
-                  const formattedNo = String(member.member_no || 0).padStart(6, '0');
+          <div className="bg-white border-t border-b border-stone-900 overflow-hidden shadow-2xl shadow-stone-200/40">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-stone-50 border-b border-stone-200">
+                    <th className="p-5 font-medium text-stone-500 text-[10px] tracking-[0.2em] uppercase">No. (Join Date)</th>
+                    <th className="p-5 font-medium text-stone-500 text-[10px] tracking-[0.2em] uppercase">Name</th>
+                    <th className="p-5 font-medium text-stone-500 text-[10px] tracking-[0.2em] uppercase">Last Order</th>
+                    <th className="p-5 font-medium text-stone-500 text-[10px] tracking-[0.2em] uppercase">Email</th>
+                    <th className="p-5 text-center font-medium text-stone-500 text-[10px] tracking-[0.2em] uppercase">Log</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-stone-100">
+                  {displayedMembers.map((member) => {
+                    const hasOrder = member.latestOrderDate !== '1970-01-01T00:00:00.000Z';
+                    const formattedNo = String(member.member_no || 0).padStart(6, '0');
 
-                  return (
-                    <div key={member.id} className="contents">
-                      <tr className="hover:bg-blue-50 transition-colors">
-                        <td className="p-4 text-sm font-mono">
-                          <span className="font-extrabold text-blue-800 bg-blue-100 px-2 py-1 rounded">No. {formattedNo}</span>
-                          <span className="text-xs text-gray-400 mt-2 block">가입: {new Date(member.created_at).toLocaleDateString('ko-KR')}</span>
-                        </td>
-                        <td className="p-4 font-bold text-gray-900 text-lg">{member.name}</td>
-                        <td className="p-4 text-sm">
-                          {hasOrder ? (
-                            <span className="font-bold text-gray-700">{new Date(member.latestOrderDate).toLocaleDateString('ko-KR')}</span>
-                          ) : (
-                            <span className="text-gray-400">구매이력 없음</span>
-                          )}
-                        </td>
-                        <td className="p-4 text-gray-600 font-medium">{member.email}</td>
-                        <td className="p-4 text-center">
-                          <button 
-                            onClick={() => fetchMemberOrders(member.id)}
-                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${
-                              selectedMember === member.id ? 'bg-gray-800 text-white' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                            }`}
-                          >
-                            {selectedMember === member.id ? '내역 닫기' : '상세 내역'}
-                          </button>
-                        </td>
-                      </tr>
-
-                      {selectedMember === member.id && (
-                        <tr>
-                          <td colSpan={5} className="bg-gray-50 p-6 border-b border-gray-200">
-                            <h3 className="font-bold text-gray-800 mb-4">🛒 [{member.name}] 님의 낱건 구매 상세 로그</h3>
-                            {loadingOrders ? (
-                              <p className="text-sm text-gray-500">로그를 불러오는 중입니다...</p>
-                            ) : memberOrders.length === 0 ? (
-                              <p className="text-sm text-gray-500">아직 구매 내역이 없습니다.</p>
+                    return (
+                      <div key={member.id} className="contents">
+                        <tr className="hover:bg-stone-50/50 transition-colors">
+                          <td className="p-5 text-sm font-light">
+                            <span className="font-mono text-amber-700 tracking-widest">No. {formattedNo}</span>
+                            <span className="text-[10px] tracking-widest text-stone-400 mt-1 block uppercase">Joined: {new Date(member.created_at).toLocaleDateString('ko-KR')}</span>
+                          </td>
+                          <td className="p-5 font-light text-stone-900 text-base">{member.name}</td>
+                          <td className="p-5 text-sm font-light">
+                            {hasOrder ? (
+                              <span className="text-stone-800 tracking-wider">{new Date(member.latestOrderDate).toLocaleDateString('ko-KR')}</span>
                             ) : (
-                              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-inner">
-                                <table className="w-full text-sm text-left text-gray-700">
-                                  <thead className="bg-gray-100 border-b border-gray-200">
-                                    <tr>
-                                      <th className="p-3 pl-4">주문 일시</th>
-                                      <th className="p-3 text-center text-xs text-gray-400">품목코드</th>
-                                      <th className="p-3">품목명 (품종)</th>
-                                      <th className="p-3 text-right">직판단가</th>
-                                      <th className="p-3 text-right text-blue-600 font-bold">주문 수량</th>
-                                      <th className="p-3 text-right">총 결제금액</th>
-                                      <th className="p-3 text-center">진행 상태</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-gray-100">
-                                    {memberOrders.map((order) => {
-                                      const date = new Date(order.created_at).toLocaleString('ko-KR');
-                                      const product = order.products || { item_name: '삭제됨', variety_name: '', variety_code: '-', direct_price: 0 };
-                                      const totalPrice = product.direct_price * order.order_qty;
-
-                                      return (
-                                        <tr key={order.id} className="hover:bg-yellow-50">
-                                          <td className="p-3 pl-4 text-gray-500">{date}</td>
-                                          <td className="p-3 text-center text-gray-400 font-mono text-xs">{product.variety_code}</td>
-                                          <td className="p-3 font-bold text-gray-900">
-                                            {product.item_name} <span className="text-xs text-gray-500 font-normal">({product.variety_name})</span>
-                                          </td>
-                                          <td className="p-3 text-right text-gray-600">{product.direct_price.toLocaleString()}원</td>
-                                          <td className="p-3 text-right font-extrabold text-blue-700 text-base">{order.order_qty} 속</td>
-                                          <td className="p-3 text-right font-bold text-red-600">{totalPrice.toLocaleString()}원</td>
-                                          <td className="p-3 text-center">
-                                            <span className={`px-2 py-1 text-xs font-bold rounded ${
-                                              order.status === '입금완료' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                                            }`}>
-                                              {order.status}
-                                            </span>
-                                          </td>
-                                        </tr>
-                                      );
-                                    })}
-                                  </tbody>
-                                </table>
-                              </div>
+                              <span className="text-stone-300 tracking-widest text-xs uppercase">No Order</span>
                             )}
                           </td>
+                          <td className="p-5 text-stone-600 font-light text-sm">{member.email}</td>
+                          <td className="p-5 text-center">
+                            <button 
+                              onClick={() => fetchMemberOrders(member.id)}
+                              className={`px-6 py-2 text-[10px] tracking-[0.2em] uppercase transition-colors border ${
+                                selectedMember === member.id 
+                                  ? 'bg-stone-900 text-white border-stone-900' 
+                                  : 'bg-transparent text-stone-500 border-stone-300 hover:bg-stone-100 hover:text-stone-900'
+                              }`}
+                            >
+                              {selectedMember === member.id ? 'Close' : 'View'}
+                            </button>
+                          </td>
                         </tr>
-                      )}
-                    </div>
-                  );
-                })}
-              </tbody>
-            </table>
+
+                        {selectedMember === member.id && (
+                          <tr>
+                            <td colSpan={5} className="p-0 border-b border-stone-200 bg-[#FAFAFA]">
+                              <div className="p-8 md:pl-24 md:pr-12 border-l-4 border-amber-700/50">
+                                <h3 className="font-serif text-stone-900 mb-6 tracking-wide flex items-center gap-3">
+                                  <span className="text-amber-700 text-sm">✦</span> {member.name} 님의 구매 이력
+                                </h3>
+                                {loadingOrders ? (
+                                  <p className="text-xs text-stone-400 tracking-widest uppercase">Loading...</p>
+                                ) : memberOrders.length === 0 ? (
+                                  <p className="text-xs text-stone-400 tracking-widest uppercase">No purchase history</p>
+                                ) : (
+                                  <div className="bg-white border border-stone-200 overflow-hidden shadow-inner">
+                                    <table className="w-full text-left">
+                                      <thead className="bg-stone-50 border-b border-stone-200">
+                                        <tr>
+                                          <th className="p-3 pl-6 text-[10px] font-light tracking-[0.2em] text-stone-500 uppercase">Date</th>
+                                          <th className="p-3 text-[10px] font-light tracking-[0.2em] text-stone-500 uppercase">Code</th>
+                                          <th className="p-3 text-[10px] font-light tracking-[0.2em] text-stone-500 uppercase">Product</th>
+                                          <th className="p-3 text-right text-[10px] font-light tracking-[0.2em] text-stone-500 uppercase">Price</th>
+                                          <th className="p-3 text-right text-[10px] font-light tracking-[0.2em] text-stone-900 uppercase">Qty</th>
+                                          <th className="p-3 text-right text-[10px] font-light tracking-[0.2em] text-stone-900 uppercase">Subtotal</th>
+                                          <th className="p-3 pr-6 text-center text-[10px] font-light tracking-[0.2em] text-stone-500 uppercase">Status</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-stone-100">
+                                        {memberOrders.map((order) => {
+                                          const product = order.products || { item_name: '삭제됨', variety_name: '', variety_code: '-', direct_price: 0 };
+                                          const totalPrice = product.direct_price * order.order_qty;
+
+                                          return (
+                                            <tr key={order.id} className="hover:bg-stone-50/50">
+                                              <td className="p-3 pl-6 text-stone-400 text-xs tracking-wider">{new Date(order.created_at).toLocaleDateString('ko-KR')}</td>
+                                              <td className="p-3 text-stone-400 font-mono text-[10px] tracking-widest">{product.variety_code}</td>
+                                              <td className="p-3 text-sm font-light text-stone-800">
+                                                {product.item_name} <span className="text-[10px] text-stone-400 uppercase tracking-widest">({product.variety_name})</span>
+                                              </td>
+                                              <td className="p-3 text-right text-stone-500 text-xs tracking-wider">{product.direct_price.toLocaleString()}</td>
+                                              <td className="p-3 text-right text-stone-900 text-sm">{order.order_qty}</td>
+                                              <td className="p-3 text-right font-serif text-stone-900 tracking-wide">{totalPrice.toLocaleString()}</td>
+                                              <td className="p-3 pr-6 text-center">
+                                                <span className={`px-2 py-1 text-[9px] font-bold tracking-widest uppercase border ${
+                                                  order.status === '입금완료' ? 'text-stone-800 border-stone-800 bg-transparent' : 'text-amber-700 border-amber-300 bg-amber-50'
+                                                }`}>
+                                                  {order.status}
+                                                </span>
+                                              </td>
+                                            </tr>
+                                          );
+                                        })}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </div>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </main>

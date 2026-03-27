@@ -10,8 +10,15 @@ import { Toaster, toast } from 'react-hot-toast';
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<any>(null);
   const [userRole, setUserRole] = useState<string>('user');
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
+    // 스크롤 시 헤더 디자인 변경을 위한 이벤트
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) fetchUserRole(session.user.id);
@@ -19,14 +26,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session?.user) {
-        fetchUserRole(session.user.id);
-      } else {
-        setUserRole('user');
-      }
+      if (session?.user) fetchUserRole(session.user.id);
+      else setUserRole('user');
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const fetchUserRole = async (userId: string) => {
@@ -36,72 +43,61 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    toast.success('안전하게 로그아웃 되었습니다.');
-    setTimeout(() => {
-      window.location.href = '/login';
-    }, 1000);
+    toast.success('로그아웃 되었습니다.', { style: { background: '#1c1917', color: '#fff' }});
+    setTimeout(() => { window.location.href = '/login'; }, 1000);
   };
 
   return (
-    <html lang="ko">
-      <body className="bg-gray-50 text-gray-900">
-        <Toaster position="top-center" toastOptions={{ duration: 3000, style: { fontWeight: 'bold' } }} />
+    <html lang="ko" className="antialiased">
+      <body className="bg-[#FAFAFA] text-stone-800 font-light selection:bg-stone-800 selection:text-stone-100">
+        <Toaster position="top-center" toastOptions={{ duration: 3000, style: { borderRadius: '0px', border: '1px solid #e7e5e4' } }} />
 
-        <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between h-16 items-center">
+        {/* ✨ 럭셔리 호텔 스타일 네비게이션 바 */}
+        <nav className={`fixed w-full top-0 z-50 transition-all duration-500 ${isScrolled ? 'bg-white/95 backdrop-blur-sm border-b border-stone-200 py-2' : 'bg-transparent py-4'}`}>
+          <div className="max-w-7xl mx-auto px-6 lg:px-10">
+            <div className="flex justify-between items-center">
               
-              {/* ✨ 왼쪽 메뉴: 누구나 볼 수 있는 공통 메뉴 */}
-              <div className="flex-shrink-0 flex items-center gap-6">
-                <Link href="/" className="text-xl font-extrabold text-green-800 tracking-tight">
-                  🌻 아빠의 꽃
+              <div className="flex items-center gap-10">
+                {/* 로고: 명조체(Serif)와 자간(Tracking) 활용 */}
+                <Link href="/" className={`text-2xl font-serif tracking-widest ${isScrolled ? 'text-stone-900' : 'text-stone-900'} transition-colors`}>
+                  FATHER'S FLOWER
                 </Link>
-                <Link href="/shop" className="text-gray-600 hover:text-green-700 font-semibold">
-                  꽃 구경하기
-                </Link>
-                {/* 👇 새롭게 추가된 '농장 소식(공지사항)' 메뉴 👇 */}
-                <Link href="/notices" className="text-gray-600 hover:text-green-700 font-semibold">
-                  농장 소식
-                </Link>
+                <div className="hidden md:flex gap-8">
+                  <Link href="/shop" className={`text-sm tracking-widest hover:text-amber-700 transition-colors ${isScrolled ? 'text-stone-600' : 'text-stone-800'}`}>
+                    FLOWER MARKET
+                  </Link>
+                  <Link href="/notices" className={`text-sm tracking-widest hover:text-amber-700 transition-colors ${isScrolled ? 'text-stone-600' : 'text-stone-800'}`}>
+                    NOTICE
+                  </Link>
+                </div>
               </div>
 
-              {/* 오른쪽 메뉴: 로그인/로그아웃 및 권한별 메뉴 */}
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-6">
                 {session ? (
                   <>
-                    <Link href="/mypage" className="text-gray-600 hover:text-green-700 text-sm font-semibold">
-                      마이페이지
+                    <Link href="/mypage" className={`text-xs tracking-widest hover:text-amber-700 transition-colors ${isScrolled ? 'text-stone-600' : 'text-stone-800'}`}>
+                      MY PAGE
                     </Link>
                     
-                    {/* 관리자 전용 메뉴 */}
                     {userRole === 'admin' && (
-                      <>
-                        <span className="text-gray-300">|</span>
-                        <Link href="/admin" className="text-blue-600 hover:text-blue-800 text-sm font-bold">
-                          재고 관리
-                        </Link>
-                        <Link href="/orders" className="text-blue-600 hover:text-blue-800 text-sm font-bold">
-                          주문 장부
-                        </Link>
-                        <Link href="/admin/members" className="text-blue-600 hover:text-blue-800 text-sm font-bold">
-                          회원 관리
-                        </Link>
-                        <Link href="/admin/notices" className="text-blue-600 hover:text-blue-800 text-sm font-bold">
-                          공지 관리
-                        </Link>
-                      </>
+                      <div className="hidden md:flex items-center gap-5 ml-4 pl-6 border-l border-stone-300">
+                        <Link href="/admin" className="text-stone-500 hover:text-stone-900 text-xs tracking-widest">INVENTORY</Link>
+                        <Link href="/orders" className="text-stone-500 hover:text-stone-900 text-xs tracking-widest">ORDERS</Link>
+                        <Link href="/admin/members" className="text-stone-500 hover:text-stone-900 text-xs tracking-widest">MEMBERS</Link>
+                        <Link href="/admin/notices" className="text-stone-500 hover:text-stone-900 text-xs tracking-widest">ADMIN NOTICE</Link>
+                      </div>
                     )}
                     
                     <button 
                       onClick={handleLogout}
-                      className="ml-4 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-200 transition-colors"
+                      className="ml-2 text-xs tracking-widest text-stone-500 hover:text-stone-900 transition-all uppercase"
                     >
-                      로그아웃
+                      Logout
                     </button>
                   </>
                 ) : (
-                  <Link href="/login" className="bg-green-600 text-white px-5 py-2 rounded-lg text-sm font-bold hover:bg-green-700 transition-colors">
-                    로그인 / 가입
+                  <Link href="/login" className="border border-stone-800 text-stone-800 px-6 py-2 text-xs tracking-widest hover:bg-stone-800 hover:text-white transition-all duration-300">
+                    LOGIN
                   </Link>
                 )}
               </div>
@@ -109,9 +105,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </nav>
 
-        <div className="pt-4">
+        <div className="min-h-screen">
           {children}
         </div>
+        
+        {/* ✨ 미니멀하고 무게감 있는 푸터 */}
+        <footer className="bg-stone-900 text-stone-400 py-16 mt-20">
+          <div className="max-w-7xl mx-auto px-6 lg:px-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div>
+              <h2 className="text-xl font-serif text-stone-200 tracking-widest mb-2">FATHER'S FLOWER</h2>
+              <p className="text-xs tracking-widest font-light">EXCLUSIVE FLORIST B2B PLATFORM</p>
+            </div>
+            <div className="text-xs tracking-widest font-light text-right">
+              <p>© 2026 FATHER'S FLOWER. ALL RIGHTS RESERVED.</p>
+            </div>
+          </div>
+        </footer>
       </body>
     </html>
   );
