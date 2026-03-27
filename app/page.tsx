@@ -60,9 +60,8 @@ export default function Home() {
   return (
     <div className="bg-[#FAFAFA]">
       
-      {/* ✨ 프레스티지 히어로 섹션 (호텔 메인 스타일) */}
+      {/* ✨ 프레스티지 히어로 섹션 */}
       <section className="relative h-screen min-h-[700px] flex items-center justify-center text-center overflow-hidden">
-        {/* 우아한 다크 그레이/브라운 배경 톤 */}
         <div className="absolute inset-0 bg-stone-900">
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60"></div>
         </div>
@@ -84,11 +83,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ✨ 미니멀 & 럭셔리 공지사항 섹션 */}
+      {/* ✨ 럭셔리 공지사항 섹션 */}
       {latestNotices.length > 0 && (
         <section className="max-w-5xl mx-auto -mt-24 relative z-20 px-6">
           <div className="bg-white border border-stone-200 shadow-xl">
-            <div className="px-10 py-6 border-b border-stone-100 flex justify-between items-center bg-[#FCFCFC]">
+            <div className="px-6 md:px-10 py-6 border-b border-stone-100 flex justify-between items-center bg-[#FCFCFC]">
               <h2 className="font-serif text-lg text-stone-900 tracking-widest">NOTICE</h2>
               <button onClick={() => router.push('/notices')} className="text-xs font-light tracking-widest text-stone-500 hover:text-amber-700 transition-colors uppercase">
                 View All
@@ -99,9 +98,9 @@ export default function Home() {
                 <div 
                   key={notice.id} 
                   onClick={() => router.push(`/notices/${notice.id}`)}
-                  className="px-10 py-6 flex flex-col md:flex-row justify-between md:items-center cursor-pointer hover:bg-stone-50 transition-colors group gap-2"
+                  className="px-6 md:px-10 py-6 flex flex-col md:flex-row justify-between md:items-center cursor-pointer hover:bg-stone-50 transition-colors group gap-2"
                 >
-                  <span className="font-light text-stone-800 text-lg group-hover:text-amber-700 transition-colors truncate">
+                  <span className="font-light text-stone-800 text-base md:text-lg group-hover:text-amber-700 transition-colors truncate">
                     {notice.title}
                   </span>
                   <span className="text-xs text-stone-400 font-light tracking-widest whitespace-nowrap">
@@ -115,12 +114,12 @@ export default function Home() {
       )}
 
       {/* ✨ 절제된 프라이빗 마켓 리포트 (데이터 테이블) */}
-      <section className="py-32 px-6 max-w-5xl mx-auto">
-        <div className="text-center mb-20">
+      <section className="py-24 md:py-32 px-4 md:px-6 max-w-5xl mx-auto">
+        <div className="text-center mb-16 md:mb-20">
           <h3 className="text-xs tracking-[0.2em] text-amber-700 mb-4 font-bold uppercase">Today's Selection</h3>
-          <h2 className="text-3xl font-serif text-stone-900 mb-6 tracking-wide">프라이빗 직판가 리포트</h2>
+          <h2 className="text-2xl md:text-3xl font-serif text-stone-900 mb-6 tracking-wide">프라이빗 직판가 리포트</h2>
           <div className="h-[1px] w-12 bg-stone-300 mx-auto mb-6"></div>
-          <p className="text-stone-500 font-light tracking-wider text-sm">
+          <p className="text-stone-500 font-light tracking-wider text-xs md:text-sm">
             {today} 기준, 투명하게 공개되는 aT 경매 시세와 아빠의 꽃 직판가입니다.
           </p>
         </div>
@@ -136,35 +135,40 @@ export default function Home() {
             NO FLOWERS AVAILABLE TODAY
           </div>
         ) : (
-          <div className="bg-white border-t border-b border-stone-900 overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr>
-                  <th className="p-6 font-medium text-stone-500 text-xs tracking-[0.1em] border-b border-stone-200 uppercase">Item</th>
-                  <th className="p-6 font-medium text-stone-500 text-xs tracking-[0.1em] border-b border-stone-200 uppercase">Variety (Grade)</th>
-                  <th className="p-6 text-right font-medium text-stone-500 text-xs tracking-[0.1em] border-b border-stone-200 uppercase">Market Avg</th>
-                  <th className="p-6 text-right font-medium text-stone-900 text-xs tracking-[0.1em] border-b border-stone-200 uppercase bg-stone-50">Private Price</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-stone-100">
-                {comparisons.map((item) => {
-                  return (
-                    <tr key={item.id} className="hover:bg-stone-50/50 transition-colors">
-                      <td className="p-6 font-light text-stone-900 text-lg">{item.itemName}</td>
-                      <td className="p-6 text-stone-600 font-light">
-                        {item.varietyName} <span className="text-[10px] tracking-widest border border-stone-300 px-2 py-1 ml-2 text-stone-500 uppercase">{item.grade}</span>
-                      </td>
-                      <td className="p-6 text-right text-stone-400 font-light tracking-wider">
-                        {item.marketAvgPrice.toLocaleString()} KRW
-                      </td>
-                      <td className="p-6 text-right font-medium text-stone-900 text-lg tracking-wider bg-stone-50/50">
-                        {item.fatherPrice.toLocaleString()} KRW
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="bg-white border-t border-b border-stone-900 overflow-hidden relative">
+            {/* ✨ 가로 스크롤 허용 및 텍스트 줄바꿈 방지(whitespace-nowrap) */}
+            <div className="overflow-x-auto pb-4 scrollbar-hide">
+              <table className="w-full text-left whitespace-nowrap min-w-[600px]">
+                <thead>
+                  <tr>
+                    <th className="p-4 md:p-6 font-medium text-stone-500 text-[10px] tracking-[0.1em] border-b border-stone-200 uppercase">Item</th>
+                    <th className="p-4 md:p-6 font-medium text-stone-500 text-[10px] tracking-[0.1em] border-b border-stone-200 uppercase">Variety (Grade)</th>
+                    <th className="p-4 md:p-6 text-right font-medium text-stone-500 text-[10px] tracking-[0.1em] border-b border-stone-200 uppercase">Market Avg</th>
+                    <th className="p-4 md:p-6 text-right font-medium text-stone-900 text-[10px] tracking-[0.1em] border-b border-stone-200 uppercase bg-stone-50">Private Price</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-stone-100">
+                  {comparisons.map((item) => {
+                    return (
+                      <tr key={item.id} className="hover:bg-stone-50/50 transition-colors">
+                        <td className="p-4 md:p-6 font-light text-stone-900 text-base md:text-lg">{item.itemName}</td>
+                        <td className="p-4 md:p-6 text-stone-600 font-light text-sm md:text-base">
+                          {item.varietyName} <span className="text-[9px] md:text-[10px] tracking-widest border border-stone-300 px-2 py-1 ml-2 text-stone-500 uppercase">{item.grade}</span>
+                        </td>
+                        <td className="p-4 md:p-6 text-right text-stone-400 font-light tracking-wider text-sm md:text-base">
+                          {item.marketAvgPrice.toLocaleString()} KRW
+                        </td>
+                        <td className="p-4 md:p-6 text-right font-medium text-stone-900 text-base md:text-lg tracking-wider bg-stone-50/50">
+                          {item.fatherPrice.toLocaleString()} KRW
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            {/* 모바일에서 스크롤 가능하다는 힌트를 주는 그라데이션 */}
+            <div className="absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none md:hidden"></div>
           </div>
         )}
       </section>
