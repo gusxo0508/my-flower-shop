@@ -13,7 +13,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
-    // 스크롤 시 헤더 디자인 변경을 위한 이벤트
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
@@ -52,13 +51,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-[#FAFAFA] text-stone-800 font-light selection:bg-stone-800 selection:text-stone-100">
         <Toaster position="top-center" toastOptions={{ duration: 3000, style: { borderRadius: '0px', border: '1px solid #e7e5e4' } }} />
 
-        {/* ✨ 럭셔리 호텔 스타일 네비게이션 바 */}
+        {/* ✨ 고급스러운 호텔 스타일 네비게이션 바 */}
         <nav className={`fixed w-full top-0 z-50 transition-all duration-500 ${isScrolled ? 'bg-white/95 backdrop-blur-sm border-b border-stone-200 py-2' : 'bg-transparent py-4'}`}>
           <div className="max-w-7xl mx-auto px-6 lg:px-10">
             <div className="flex justify-between items-center">
               
               <div className="flex items-center gap-10">
-                {/* 로고: 명조체(Serif)와 자간(Tracking) 활용 */}
                 <Link href="/" className={`text-2xl font-serif tracking-widest ${isScrolled ? 'text-stone-900' : 'text-stone-900'} transition-colors`}>
                   FATHER'S FLOWER
                 </Link>
@@ -66,6 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   <Link href="/shop" className={`text-sm tracking-widest hover:text-amber-700 transition-colors ${isScrolled ? 'text-stone-600' : 'text-stone-800'}`}>
                     FLOWER MARKET
                   </Link>
+                  {/* 👇 바로 이 부분의 오타(is Scrolled)를 수정했습니다! 👇 */}
                   <Link href="/notices" className={`text-sm tracking-widest hover:text-amber-700 transition-colors ${isScrolled ? 'text-stone-600' : 'text-stone-800'}`}>
                     NOTICE
                   </Link>
