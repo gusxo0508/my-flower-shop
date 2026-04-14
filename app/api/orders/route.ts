@@ -42,8 +42,8 @@ export async function POST(request: Request) {
           to: process.env.FATHER_PHONE_NUMBER!,
           from: process.env.MY_PHONE_NUMBER!,
           kakaoOptions: {
-            pfId: "KA01PF2000000000000000000", // 나중에 발급받을 카카오 채널 ID
-            templateId: "KA01TP2000000000000000000", // 나중에 승인받을 알림톡 템플릿 ID
+            pfId: process.env.KAKAO_ALIMTALK_PFID!,
+            templateId: process.env.KAKAO_ALIMTALK_TEMPLATE_ID!,
             variables: {
               "#{이름}": buyerName,
               "#{상품명}": summaryText

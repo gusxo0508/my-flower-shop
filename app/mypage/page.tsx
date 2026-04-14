@@ -160,8 +160,13 @@ export default function MyPage() {
                               {group.totalPrice.toLocaleString()} <span className="text-[10px] font-sans text-stone-400 ml-1">KRW</span>
                             </td>
                             <td className="p-4 md:p-5 text-center">
-                              <span className={`px-2 md:px-3 py-1 text-[9px] md:text-[10px] tracking-widest uppercase border ${
-                                group.status === '입금대기' ? 'border-amber-300 text-amber-700 bg-amber-50' : 'border-stone-800 text-stone-800 bg-transparent'
+                              <span className={`px-2 md:px-3 py-1 text-[9px] md:text-[10px] tracking-widest border ${
+                                group.status === '입금대기' ? 'border-amber-300 text-amber-700 bg-amber-50' :
+                                group.status === '입금완료' ? 'border-sky-300 text-sky-700 bg-sky-50' :
+                                group.status === '배송중'   ? 'border-emerald-400 text-emerald-700 bg-emerald-50' :
+                                group.status === '배송완료' ? 'border-stone-900 text-white bg-stone-900' :
+                                group.status === '취소'     ? 'border-red-300 text-red-500 bg-red-50' :
+                                'border-stone-300 text-stone-600 bg-transparent'
                               }`}>
                                 {group.status}
                               </span>

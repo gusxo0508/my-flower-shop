@@ -60,6 +60,53 @@ export default function OrderManagement() {
     else { toast.success(`'${newStatus}' 처리 완료`); fetchOrders(); }
   };
 
+  const getStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case '입금대기': return 'border-amber-300 text-amber-700 bg-amber-50';
+      case '입금완료': return 'border-sky-300 text-sky-700 bg-sky-50';
+      case '배송중':   return 'border-emerald-400 text-emerald-700 bg-emerald-50';
+      case '배송완료': return 'border-stone-900 text-white bg-stone-900';
+      case '취소':     return 'border-red-300 text-red-500 bg-red-50';
+      default:         return 'border-stone-300 text-stone-600 bg-transparent';
+    }
+  };
+
+  const NEXT_STATUS: Record<string, string> = {
+    '입금대기': '입금완료',
+    '입금완료': '배송중',
+    '배송중':   '배송완료',
+  };
+
+  const renderActionButtons = (group: any) => {
+    const { status, orderIds } = group;
+    if (status === '배송완료') return <span className="text-[10px] tracking-widest text-stone-300 uppercase">Completed</span>;
+    if (status === '취소') return <span className="text-[10px] tracking-widest text-red-300 uppercase">Cancelled</span>;
+
+    const nextStatus = NEXT_STATUS[status];
+    const canCancel = status === '입금대기' || status === '입금완료';
+
+    return (
+      <div className="flex items-center justify-center gap-2">
+        {nextStatus && (
+          <button
+            onClick={() => updateOrderStatus(orderIds, nextStatus)}
+            className="bg-stone-900 text-white px-4 py-2 text-[10px] tracking-widest uppercase hover:bg-stone-800 transition-colors whitespace-nowrap"
+          >
+            {nextStatus}
+          </button>
+        )}
+        {canCancel && (
+          <button
+            onClick={() => updateOrderStatus(orderIds, '취소')}
+            className="border border-red-200 text-red-400 px-3 py-2 text-[10px] tracking-widest uppercase hover:bg-red-50 transition-colors"
+          >
+            취소
+          </button>
+        )}
+      </div>
+    );
+  };
+
   const downloadExcel = () => {
     const excelData: any[] = [];
     groupedOrders.forEach(group => {
@@ -141,14 +188,10 @@ export default function OrderManagement() {
                         <td className="p-5 text-center text-stone-700 text-sm font-light">{summaryText} <span className="text-[10px] text-stone-400 ml-1">({group.totalQty} EA)</span></td>
                         <td className="p-5 text-right font-serif text-lg text-stone-900 tracking-wide">{group.totalPrice.toLocaleString()}<span className="text-[10px] text-stone-400 ml-1">KRW</span></td>
                         <td className="p-5 text-center">
-                          <span className={`px-3 py-1 text-[10px] tracking-widest uppercase border ${group.status === '입금대기' ? 'border-amber-300 text-amber-700 bg-amber-50' : 'border-stone-800 text-stone-800 bg-transparent'}`}>{group.status}</span>
+                          <span className={`px-3 py-1 text-[10px] tracking-widest border ${getStatusBadgeClass(group.status)}`}>{group.status}</span>
                         </td>
                         <td className="p-5 text-center" onClick={(e) => e.stopPropagation()}>
-                          {group.status === '입금대기' ? (
-                            <button onClick={() => updateOrderStatus(group.orderIds, '입금완료')} className="bg-stone-900 text-white px-4 py-2 text-[10px] tracking-widest uppercase hover:bg-stone-800 transition-colors">Confirm</button>
-                          ) : (
-                            <button onClick={() => updateOrderStatus(group.orderIds, '입금대기')} className="border border-stone-300 text-stone-500 px-4 py-2 text-[10px] tracking-widest uppercase hover:bg-stone-100 transition-colors">Undo</button>
-                          )}
+                          {renderActionButtons(group)}
                         </td>
                       </tr>
 

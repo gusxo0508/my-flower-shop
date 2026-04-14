@@ -61,7 +61,12 @@ export default function Shop() {
       .filter(([_, qty]) => qty > 0)
       .map(([productId, qty]) => {
         const product = products.find(p => p.id === productId);
-        return { productId: productId, quantity: qty, varietyName: product.variety_name };
+        return {
+          productId,
+          quantity: qty,
+          varietyName: product.variety_name,
+          unitPrice: product.direct_price,
+        };
       });
 
     if (cartItems.length === 0) {
@@ -70,30 +75,32 @@ export default function Shop() {
     }
 
     setSubmitting(true);
-    const loadingToast = toast.loading('주문을 처리하고 있습니다...');
+    const loadingToast = toast.loading('결제를 준비하고 있습니다...');
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const res = await fetch('/api/orders', {
+      const res = await fetch('/api/payment/kakao/ready', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ buyerName, cartItems, userId: user?.id })
+        body: JSON.stringify({ buyerName, cartItems, userId: user?.id }),
       });
-      
+
       const json = await res.json();
       toast.dismiss(loadingToast);
 
       if (json.success) {
-        toast.success('주문이 완료되었습니다.');
-        setCart({});
-        setTimeout(() => { window.location.reload(); }, 2000);
+        // approve 단계에서 tid를 복원하기 위해 sessionStorage에 저장
+        sessionStorage.setItem('kakao_tid', json.tid);
+        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+        window.location.href = isMobile ? json.redirect_mobile_url : json.redirect_pc_url;
+        // 리다이렉트 후 setSubmitting(false) 불필요 (페이지 전환)
       } else {
-        toast.error('주문 실패: ' + json.message);
+        toast.error('결제 준비 실패: ' + json.message);
+        setSubmitting(false);
       }
     } catch (error) {
       toast.dismiss(loadingToast);
       toast.error('오류가 발생했습니다.');
-    } finally {
       setSubmitting(false);
     }
   };
